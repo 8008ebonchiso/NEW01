@@ -1,197 +1,101 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TODO App</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>シンプルTODO</title>
     <style>
+        .todo-form {
+            margin: 1rem 0;
+        }
         .completed {
             text-decoration: line-through;
-            color: #6c757d;
-        }
-
-        .todo-item {
-            transition: background-color 0.3s;
-        }
-
-        .todo-item:hover {
-            background-color: #f8f9fa;
+            color: gray;
         }
     </style>
 </head>
-
 <body>
-    <div class="container py-5">
-        <h1 class="text-center mb-4">TODOリスト</h1>
+    <h1>TODOリスト</h1>
+    
+    <form id="todoForm" class="todo-form">
+        <input type="text" id="todoInput" placeholder="新しいTODOを入力..." required>
+        <button type="submit">追加</button>
+    </form>
 
-        <!-- TODO追加フォーム -->
-        <div class="row justify-content-center mb-4">
-            <div class="col-md-8">
-                <form id="todoForm" class="input-group">
-                    <input type="text" id="todoInput" class="form-control" placeholder="新しいTODOを入力..." required>
-                    <button type="submit" class="btn btn-primary">追加</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- TODOリスト -->
-        <div class="row justify-content-center">
-            <div class="col-md-8">
-                <ul id="todoList" class="list-group">
-                    <!-- TODOアイテムがここに動的に追加されます -->
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <ul id="todoList"></ul>
 
     <script>
-        // APIのベースURL - 必要に応じて変更してください
-        const API_BASE_URL = 'http://localhost:8000';
-
-        // DOMが読み込まれた後に実行
-        document.addEventListener('DOMContentLoaded', () => {
-            loadTodos();
-            setupFormHandler();
-        });
-
-        // TODOの読み込み
-        async function loadTodos() {
+        const API_URL = 'http://localhost:8000/todos';
+        
+        async function api(endpoint, options = {}) {
             try {
-                const response = await fetch(`${API_BASE_URL}/todos`);
-                const todos = await response.json();
-                displayTodos(todos);
+                const response = await fetch(endpoint, options);
+                if (!response.ok) throw new Error('API error');
+                return response.json();
             } catch (error) {
-                console.error('TODOの読み込みに失敗しました:', error);
-                showError('TODOの読み込みに失敗しました');
+                alert('エラーが発生しました');
+                console.error(error);
             }
         }
 
-        // TODOの表示
-        function displayTodos(todos) {
-            const todoList = document.getElementById('todoList');
-            todoList.innerHTML = '';
-
-            todos.forEach(todo => {
-                const li = document.createElement('li');
-                li.className = `list-group-item todo-item d-flex justify-content-between align-items-center${todo.completed ? ' completed' : ''}`;
-                li.innerHTML = `
-                    <div class="form-check flex-grow-1">
-                        <input class="form-check-input" type="checkbox" ${todo.completed ? 'checked' : ''}
-                            onchange="toggleTodo(${todo.id}, this.checked)">
-                        <label class="form-check-label">${escapeHtml(todo.title)}</label>
-                    </div>
-                    <button class="btn btn-danger btn-sm" onclick="deleteTodo(${todo.id})">削除</button>
-                `;
-                todoList.appendChild(li);
-            });
+        function renderTodo(todo) {
+            return `
+                <li>
+                    <input type="checkbox" 
+                           ${todo.completed ? 'checked' : ''} 
+                           onchange="toggleTodo(${todo.id}, this.checked)">
+                    <span class="${todo.completed ? 'completed' : ''}">${todo.title}</span>
+                    <button onclick="deleteTodo(${todo.id})">削除</button>
+                </li>
+            `;
         }
 
-        // フォームのセットアップ
-        function setupFormHandler() {
-            const form = document.getElementById('todoForm');
-            form.addEventListener('submit', async (e) => {
+        async function loadTodos() {
+            const todos = await api(API_URL);
+            if (todos) {
+                document.getElementById('todoList').innerHTML = 
+                    todos.map(renderTodo).join('');
+            }
+        }
+
+        async function addTodo(title) {
+            await api(API_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ title, completed: false })
+            });
+            loadTodos();
+        }
+
+        async function toggleTodo(id, completed) {
+            const todo = await api(`${API_URL}/${id}`);
+            if (todo) {
+                await api(`${API_URL}/${id}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ ...todo, completed })
+                });
+                loadTodos();
+            }
+        }
+
+        async function deleteTodo(id) {
+            await api(`${API_URL}/${id}`, { method: 'DELETE' });
+            loadTodos();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTodos();
+            document.getElementById('todoForm').addEventListener('submit', e => {
                 e.preventDefault();
                 const input = document.getElementById('todoInput');
                 const title = input.value.trim();
-
-                if (!title) return;
-
-                try {
-                    const response = await fetch(`${API_BASE_URL}/todos`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ title, completed: false })
-                    });
-
-                    if (response.ok) {
-                        input.value = '';
-                        loadTodos();
-                    } else {
-                        showError('TODOの追加に失敗しました');
-                    }
-                } catch (error) {
-                    console.error('TODOの追加に失敗しました:', error);
-                    showError('TODOの追加に失敗しました');
+                if (title) {
+                    addTodo(title);
+                    input.value = '';
                 }
             });
-        }
-
-        // TODOの完了状態の切り替え
-        async function toggleTodo(id, completed) {
-            try {
-                const todo = await getTodo(id);
-                const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        title: todo.title,
-                        completed: completed
-                    })
-                });
-
-                if (response.ok) {
-                    loadTodos();
-                } else {
-                    showError('TODOの更新に失敗しました');
-                }
-            } catch (error) {
-                console.error('TODOの更新に失敗しました:', error);
-                showError('TODOの更新に失敗しました');
-            }
-        }
-
-        // TODOの取得
-        async function getTodo(id) {
-            const response = await fetch(`${API_BASE_URL}/todos/${id}`);
-            if (!response.ok) {
-                throw new Error('TODOの取得に失敗しました');
-            }
-            return response.json();
-        }
-
-        // TODOの削除
-        async function deleteTodo(id) {
-            try {
-                const response = await fetch(`${API_BASE_URL}/todos/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    loadTodos();
-                } else {
-                    showError('TODOの削除に失敗しました');
-                }
-            } catch (error) {
-                console.error('TODOの削除に失敗しました:', error);
-                showError('TODOの削除に失敗しました');
-            }
-        }
-
-        // エラーメッセージの表示
-        function showError(message) {
-            alert(message);
-        }
-
-        // HTMLエスケープ
-        function escapeHtml(unsafe) {
-            return unsafe
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+        });
     </script>
 </body>
-
 </html>

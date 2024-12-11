@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +9,6 @@
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
 </head>
-
 <body class="bg-light">
     <div class="container py-5">
         <!-- ヘッダー -->
@@ -26,8 +24,7 @@
                     <div class="card-body">
                         <form id="todoForm" class="row g-3">
                             <div class="col-md-9">
-                                <input type="text" class="form-control" id="todoTitle" placeholder="新しいTODOを入力..."
-                                    required>
+                                <input type="text" class="form-control" id="todoTitle" placeholder="新しいTODOを入力..." required>
                             </div>
                             <div class="col-md-3">
                                 <button type="submit" class="btn btn-primary w-100">
@@ -79,175 +76,194 @@
 
     <!-- Bootstrap JS と 依存関係のある Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
+    
     <script>
+        // APIのベースURL
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // APIエンドポイント
+        const API_ENDPOINTS = {
+            GET_TODOS: `${API_BASE_URL}/todos`,
+            CREATE_TODO: `${API_BASE_URL}/todos`,
+            UPDATE_TODO: (id) => `${API_BASE_URL}/todos/${id}`,
+            DELETE_TODO: (id) => `${API_BASE_URL}/todos/${id}`
+        };
+
         // グローバル変数
         let editModal;
 
         // DOMが読み込まれた後に実行
-        document.addEventListener('DOMContentLoaded', function () {
-            // 初期設定
-            editModal = new bootstrap.Modal(document.getElementById('editModal'));
-
-            // 初期表示時にTODO一覧を取得
-            fetchTodos();
-
-            // TODOフォームのサブミットイベント
-            document.getElementById('todoForm').addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const titleInput = document.getElementById('todoTitle');
-                const title = titleInput.value.trim();
-
-                if (title) {
-                    try {
-                        await createTodo(title);
-                        titleInput.value = ''; // フォームをクリア
-                        await fetchTodos(); // 一覧を更新
-                    } catch (error) {
-                        showAlert('TODOの作成に失敗しました');
-                    }
-                }
-            });
-
-            // 更新ボタンのクリックイベント
-            document.getElementById('updateTodo').addEventListener('click', async function () {
-                const id = document.getElementById('editTodoId').value;
-                const title = document.getElementById('editTodoTitle').value.trim();
-
-                if (title) {
-                    try {
-                        await updateTodoItem(id, title);
-                        editModal.hide();
-                        await fetchTodos(); // 一覧を更新
-                    } catch (error) {
-                        showAlert('TODOの更新に失敗しました');
-                    }
-                }
-            });
+        document.addEventListener('DOMContentLoaded', async () => {
+            initializeApp();
+            await fetchTodos();
         });
 
-        // TODO一覧を取得して表示
+        // アプリケーションの初期化
+        function initializeApp() {
+            editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            
+            // フォームの送信イベント設定
+            document.getElementById('todoForm').addEventListener('submit', handleTodoSubmit);
+            
+            // 更新ボタンのイベント設定
+            document.getElementById('updateTodo').addEventListener('click', handleTodoUpdate);
+        }
+
+        // TODOフォーム送信処理
+        async function handleTodoSubmit(e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('todoTitle');
+            const title = titleInput.value.trim();
+            
+            if (title) {
+                try {
+                    await createTodo(title);
+                    titleInput.value = '';
+                    await fetchTodos();
+                } catch (error) {
+                    showAlert('TODOの作成に失敗しました');
+                }
+            }
+        }
+
+        // TODO更新処理
+        async function handleTodoUpdate() {
+            const id = document.getElementById('editTodoId').value;
+            const title = document.getElementById('editTodoTitle').value.trim();
+            
+            if (title) {
+                try {
+                    await updateTodoItem(id, title);
+                    editModal.hide();
+                    await fetchTodos();
+                } catch (error) {
+                    showAlert('TODOの更新に失敗しました');
+                }
+            }
+        }
+
+        // API通信関連の関数
+        // TODO一覧を取得
         async function fetchTodos() {
             try {
-                const response = await fetch('/todos');
+                const response = await fetch(API_ENDPOINTS.GET_TODOS);
                 const todos = await response.json();
-
-                const todoList = document.getElementById('todoList');
-                todoList.innerHTML = ''; // リストをクリア
-
-                todos.forEach(todo => {
-                    const li = createTodoElement(todo);
-                    todoList.appendChild(li);
-                });
+                renderTodoList(todos);
             } catch (error) {
                 showAlert('TODO一覧の取得に失敗しました');
             }
         }
 
-        // 新しいTODOを作成
+        // 新規TODO作成
         async function createTodo(title) {
-            const response = await fetch('/todos', {
+            const response = await fetch(API_ENDPOINTS.CREATE_TODO, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    title: title,
-                    completed: false
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, completed: false })
             });
-
-            if (!response.ok) {
-                throw new Error('TODOの作成に失敗しました');
-            }
+            
+            if (!response.ok) throw new Error('TODOの作成に失敗しました');
         }
 
-        // TODOを更新
-        async function updateTodoItem(id, title) {
-            const response = await fetch(`/todos/${id}`, {
+        // TODO更新
+        async function updateTodoItem(id, title, completed = false) {
+            const response = await fetch(API_ENDPOINTS.UPDATE_TODO(id), {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    title: title,
-                    completed: false
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, completed })
             });
-
-            if (!response.ok) {
-                throw new Error('TODOの更新に失敗しました');
-            }
+            
+            if (!response.ok) throw new Error('TODOの更新に失敗しました');
         }
 
-        // TODOを削除
+        // TODO削除
         async function deleteTodo(id) {
             try {
-                const response = await fetch(`/todos/${id}`, {
+                const response = await fetch(API_ENDPOINTS.DELETE_TODO(id), {
                     method: 'DELETE'
                 });
-
-                if (!response.ok) {
-                    throw new Error('TODOの削除に失敗しました');
-                }
-
-                await fetchTodos(); // 一覧を更新
+                
+                if (!response.ok) throw new Error('TODOの削除に失敗しました');
+                await fetchTodos();
             } catch (error) {
                 showAlert('TODOの削除に失敗しました');
             }
         }
 
-        // TODOの完了状態を更新
-        async function toggleTodoComplete(id, completed) {
+        // TODO完了状態の切り替え
+        async function toggleTodoComplete(id, currentCompleted) {
             try {
-                const response = await fetch(`/todos/${id}`, {
+                const response = await fetch(API_ENDPOINTS.UPDATE_TODO(id), {
                     method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        completed: !completed
+                        completed: !currentCompleted
                     })
                 });
-
-                if (!response.ok) {
-                    throw new Error('TODOの更新に失敗しました');
-                }
-
-                await fetchTodos(); // 一覧を更新
+                
+                if (!response.ok) throw new Error('TODOの更新に失敗しました');
+                await fetchTodos();
             } catch (error) {
                 showAlert('TODOの更新に失敗しました');
             }
         }
 
-        // TODO要素を作成
+        // UI関連の関数
+        // TODO一覧の描画
+        function renderTodoList(todos) {
+            const todoList = document.getElementById('todoList');
+            todoList.innerHTML = '';
+            todos.forEach(todo => {
+                const li = createTodoElement(todo);
+                todoList.appendChild(li);
+            });
+        }
+
+        // TODO要素の作成
         function createTodoElement(todo) {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex justify-content-between align-items-center';
+            
+            // 左側：チェックボックスとタイトル
+            const leftDiv = createTodoLeftSection(todo);
+            
+            // 右側：操作ボタン
+            const buttonsDiv = createTodoButtonsSection(todo);
+            
+            li.appendChild(leftDiv);
+            li.appendChild(buttonsDiv);
+            
+            return li;
+        }
 
-            // チェックボックスとタイトル
+        // TODO左側セクション（チェックボックスとタイトル）の作成
+        function createTodoLeftSection(todo) {
             const leftDiv = document.createElement('div');
             leftDiv.className = 'd-flex align-items-center';
-
+            
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'form-check-input me-2';
             checkbox.checked = todo.completed;
             checkbox.addEventListener('change', () => toggleTodoComplete(todo.id, todo.completed));
-
+            
             const titleSpan = document.createElement('span');
             titleSpan.textContent = todo.title;
             if (todo.completed) {
                 titleSpan.className = 'text-muted text-decoration-line-through';
             }
-
+            
             leftDiv.appendChild(checkbox);
             leftDiv.appendChild(titleSpan);
+            
+            return leftDiv;
+        }
 
-            // 操作ボタン
+        // TODOボタンセクション（編集・削除）の作成
+        function createTodoButtonsSection(todo) {
             const buttonsDiv = document.createElement('div');
             buttonsDiv.className = 'btn-group';
-
+            
             // 編集ボタン
             const editButton = document.createElement('button');
             editButton.className = 'btn btn-sm btn-outline-primary';
@@ -257,23 +273,20 @@
                 document.getElementById('editTodoTitle').value = todo.title;
                 editModal.show();
             });
-
+            
             // 削除ボタン
             const deleteButton = document.createElement('button');
             deleteButton.className = 'btn btn-sm btn-outline-danger';
             deleteButton.innerHTML = '<i class="bi bi-trash"></i>';
             deleteButton.addEventListener('click', () => deleteTodo(todo.id));
-
+            
             buttonsDiv.appendChild(editButton);
             buttonsDiv.appendChild(deleteButton);
-
-            li.appendChild(leftDiv);
-            li.appendChild(buttonsDiv);
-
-            return li;
+            
+            return buttonsDiv;
         }
 
-        // エラーメッセージを表示
+        // エラーメッセージの表示
         function showAlert(message) {
             const alertDiv = document.createElement('div');
             alertDiv.className = 'alert alert-danger alert-dismissible fade show';
@@ -282,18 +295,14 @@
                 ${message}
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
-
+            
             document.querySelector('.container').insertBefore(
                 alertDiv,
                 document.querySelector('.container').firstChild
             );
-
-            // 3秒後に自動で消える
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 3000);
+            
+            setTimeout(() => alertDiv.remove(), 3000);
         }
     </script>
 </body>
-
 </html>

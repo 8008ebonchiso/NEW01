@@ -12,9 +12,9 @@ def init_db():
     # SQLiteデータベースに接続（ファイルが存在しない場合は新規作成）
     with sqlite3.connect('todos.db') as conn:
         # TODOを保存するテーブルを作成（すでに存在する場合は作成しない）
-        # # 自動増分する一意のID（INTEGER PRIMARY KEY AUTOINCREMENT）
-        # # TODOのタイトル（TEXT NOT NULL）
-        # # 完了状態（BOOLEAN DEFAULT FALSE）
+        # 自動増分する一意のID（INTEGER PRIMARY KEY AUTOINCREMENT）
+        # TODOのタイトル（TEXT NOT NULL）
+        # 完了状態（BOOLEAN DEFAULT FALSE）
         conn.execute('''
             CREATE TABLE IF NOT EXISTS todos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,

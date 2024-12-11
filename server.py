@@ -1,4 +1,3 @@
-# FastAPIとその他必要なモジュールをインポート
 from fastapi import FastAPI, HTTPException  # FastAPIフレームワークの基本機能とエラー処理用のクラス
 from pydantic import BaseModel  # データのバリデーション（検証）を行うための基本クラス
 from typing import Optional  # 省略可能な項目を定義するために使用
@@ -13,11 +12,14 @@ def init_db():
     # SQLiteデータベースに接続（ファイルが存在しない場合は新規作成）
     with sqlite3.connect('todos.db') as conn:
         # TODOを保存するテーブルを作成（すでに存在する場合は作成しない）
+        # # 自動増分する一意のID（INTEGER PRIMARY KEY AUTOINCREMENT）
+        # # TODOのタイトル（TEXT NOT NULL）
+        # # 完了状態（BOOLEAN DEFAULT FALSE）
         conn.execute('''
             CREATE TABLE IF NOT EXISTS todos (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,  # 自動増分する一意のID
-                title TEXT NOT NULL,                   # TODOのタイトル（必須項目）
-                completed BOOLEAN DEFAULT FALSE        # 完了状態（デフォルトは未完了）
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                completed BOOLEAN DEFAULT FALSE
             )
         ''')
 
@@ -42,7 +44,8 @@ class TodoResponse(Todo):
 def create_todo(todo: Todo):
     with sqlite3.connect('todos.db') as conn:
         cursor = conn.execute(
-            'INSERT INTO todos (title, completed) VALUES (?, ?)',  # SQLインジェクション対策のためパラメータ化したSQL文を使用
+            # SQLインジェクション対策のためパラメータ化したSQL文を使用
+            'INSERT INTO todos (title, completed) VALUES (?, ?)',
             (todo.title, todo.completed)
         )
         todo_id = cursor.lastrowid  # 新しく作成されたTODOのIDを取得

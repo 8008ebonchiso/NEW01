@@ -11,7 +11,7 @@ import sqlite3  # SQLiteデータベースを使用するためのライブラ�
 app = FastAPI()
 
 
-# corsを有効にする
+# corsを無効化（開発時のみ）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

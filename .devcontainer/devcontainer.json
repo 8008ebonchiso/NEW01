@@ -8,7 +8,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-python.black-formatter",
-				"ms-vscode.live-server"
+				// "ms-vscode.live-server",
+				"ritwickdey.LiveServer"
 			]
 		}
 	},

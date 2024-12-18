@@ -30,8 +30,10 @@
     <ul id="todoList"></ul>
 
     <script>
+        const HOST = "https://ubiquitous-disco-644jx9jr5vwhxjg-8000.app.github.dev/"
+
         // APIのベースURL：実際のAPIサーバーのアドレス
-        const API_URL = 'http://localhost:8000/todos';
+        const API_URL = HOST + "todos"
         
         /**
          * APIとの通信を行う汎用関数

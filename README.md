@@ -200,5 +200,7 @@ uvicorn server:app --host 0.0.0.0 --port 8000 --reload
 # 命令
 サーバーサイドのコードに対応したHTMLファイルを作成してください。
 CSSやJavaScriptを追加しても構いません。
+HTMLファイル1つで必ず出力されるようにしてください。
+APIサーバーのベースURLは、`http://localhost:8000/todos`に設定してください。
 {各種条件　色合い、デザイン、機能など}
 ```

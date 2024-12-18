@@ -171,7 +171,7 @@ def search_recipes(max_time: Optional[int] = None):
 4. エラーが出たら、エラーメッセージをよく読んで対処する
 5. コードにコメントを書いて、後で見返したときに理解できるようにする
 
-# 役に立つコマンド
+# 役に立つ情報
 ## ライブラリのインストール
 ```bash
 pip install -r requirements.txt
@@ -180,4 +180,25 @@ pip install -r requirements.txt
 ## サーバーを起動するコマンド
 ```bash
 uvicorn server:app --host 0.0.0.0 --port 8000 --reload
+```
+
+## server.pyを作成するプロンプト
+```text
+# 元のコード
+{変更前のserver.pyの中身をすべてコピーしてください}
+
+# 命令
+上記のコードを参考に、pythonのFastAPIを使ってAPIサーバーを作成してください。
+保存するべきデータは、{作成するアプリで必要なもの}です。
+```
+
+## client.htmlを作成するプロンプト
+```text
+# サーバーサイドのコード
+{作成したserver.pyの中身をすべてコピーしてください}
+
+# 命令
+サーバーサイドのコードに対応したHTMLファイルを作成してください。
+CSSやJavaScriptを追加しても構いません。
+{各種条件　色合い、デザイン、機能など}
 ```

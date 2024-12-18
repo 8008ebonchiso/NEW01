@@ -51,7 +51,7 @@
 
     変更前のコード
     ```javascript
-    // APIサーバーのベースURL（それぞれで違います）
+    // APIサーバーのベースURL
     const API_URL = "http://localhost:8000/todos"
     ```
 

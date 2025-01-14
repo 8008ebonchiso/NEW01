@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse  # HTMLを返すためのレスポン
 from pydantic import BaseModel  # データのバリデーション（検証）を行うための基本クラス
 from typing import Optional  # 省略可能な項目を定義するために使用
 import sqlite3  # SQLiteデータベースを使用するためのライブラリ
-import uvicorn
+import uvicorn # ASGIサーバーを起動するためのライブラリ
 
 # FastAPIアプリケーションのインスタンスを作成
 app = FastAPI()
@@ -22,9 +22,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # データベースの初期設定を行う関数
-
-
 def init_db():
     # SQLiteデータベースに接続（ファイルが存在しない場合は新規作成）
     with sqlite3.connect("todos.db") as conn:
@@ -58,6 +57,7 @@ class TodoResponse(Todo):
     id: int  # TODOのID
 
 
+# クライアント用のHTMLを返すエンドポイント
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     with open("client.html", "r", encoding="utf-8") as f:

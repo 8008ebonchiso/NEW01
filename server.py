@@ -58,7 +58,7 @@ class TodoResponse(Todo):
 
 
 @app.get("/", response_class=HTMLResponse)
-async def read_root():
+def read_root():
     with open("client.html", "r", encoding="utf-8") as f:
         return f.read()
 

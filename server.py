@@ -3,6 +3,7 @@ from fastapi import (
     HTTPException,
 )  # FastAPIフレームワークの基本機能とエラー処理用のクラス
 from fastapi.middleware.cors import CORSMiddleware  # CORSを有効にするためのミドルウェア
+from fastapi.responses import HTMLResponse  # HTMLを返すためのレスポンスクラス
 from pydantic import BaseModel  # データのバリデーション（検証）を行うための基本クラス
 from typing import Optional  # 省略可能な項目を定義するために使用
 import sqlite3  # SQLiteデータベースを使用するためのライブラリ
@@ -19,7 +20,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # データベースの初期設定を行う関数
 def init_db():
@@ -53,6 +53,12 @@ class Todo(BaseModel):
 # レスポンスのデータ構造を定義するクラス（TodoクラスにIDを追加）
 class TodoResponse(Todo):
     id: int  # TODOのID
+
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    with open("client.html", "r", encoding="utf-8") as f:
+        return f.read()
 
 
 # 新規TODOを作成するエンドポイント
@@ -111,3 +117,10 @@ def delete_todo(todo_id: int):
         if cursor.rowcount == 0:  # 削除対象のTODOが存在しない場合は404エラーを返す
             raise HTTPException(status_code=404, detail="Todo not found")
         return {"message": "Todo deleted"}
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    # FastAPIアプリケーションを非同期モードで起動
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -5,7 +5,8 @@
 		"vscode": {
 			"extensions": [
 				"ms-python.black-formatter",
-				"ritwickdey.LiveServer"
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
 			]
 		}
 	},

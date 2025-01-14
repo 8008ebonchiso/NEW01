@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse  # HTMLを返すためのレスポン
 from pydantic import BaseModel  # データのバリデーション（検証）を行うための基本クラス
 from typing import Optional  # 省略可能な項目を定義するために使用
 import sqlite3  # SQLiteデータベースを使用するためのライブラリ
+import uvicorn
 
 # FastAPIアプリケーションのインスタンスを作成
 app = FastAPI()
@@ -123,7 +124,5 @@ def delete_todo(todo_id: int):
 
 
 if __name__ == "__main__":
-    import uvicorn
-
     # FastAPIアプリケーションを非同期モードで起動
     uvicorn.run(app, host="0.0.0.0", port=8000)

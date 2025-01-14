@@ -156,7 +156,7 @@ pip install -r requirements.txt
 
 ## サーバーを起動するコマンド
 ```bash
-python main.py
+python server.py
 ```
 
 ## server.pyを作成するプロンプト
